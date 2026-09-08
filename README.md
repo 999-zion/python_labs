@@ -1,3 +1,3 @@
 task 1 
 
-![123]('/images/img01.png')
+![task1]('images/img01.png')
