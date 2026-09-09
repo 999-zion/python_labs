@@ -1,3 +1,17 @@
-task 1 
+# Лабараторная работа №1 
 
-![123]('/images/img01.png')`
+## Задание 1
+![task1](images/lab01/img01.png)
+
+## Задание 2
+![task2](images/lab01/img02.png)
+
+## Задание 3
+![task3](images/lab01/img03.png)
+
+## Задание 4
+![task4](images/lab01/img04.png)
+
+## Задание 5
+![task5](images/lab01/img05.png)
+
