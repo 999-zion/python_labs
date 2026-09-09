@@ -15,3 +15,8 @@
 ## Задание 5
 ![task5](images/lab01/img05.png)
 
+## Задание 6
+![task6](images/lab01/img06.png)
+
+## Задание 7
+![task7](images/lab01/img07.png)
