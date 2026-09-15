@@ -1,9 +1,9 @@
-n = int(input())
+n = int(input('in_1: '))
 ochno , zaochno = 0 , 0 
 for i in range(n):
-    s = input().split()
+    s = input(f'in_{i+2}: ').split()
     if s[3] == 'True':
         ochno +=1
     else: 
         zaochno+=1
-print(ochno,zaochno)
+print('out:',ochno,zaochno)
