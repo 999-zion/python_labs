@@ -35,7 +35,8 @@ def flatten(mat: list[list | tuple]) -> list:
     for i in mat:
         if type(i) == list or type(i) == tuple:
             ans += i
-        else: raise TypeError("строка не строка строк матрицы")
+        else:
+            raise TypeError("строка не строка строк матрицы")
     return ans
 
 '''
