@@ -8,9 +8,9 @@ def format_record(rec: tuple[str, str, float]) -> str:
     gpa = rec[2]
 
     if len(fio) == 3:
-        fio = str(f"{fio[0][0].upper()+fio[0][1:].lower()} {fio[1][0].upper()}.{fio[2][0].upper()}.")
+        fio = f"{fio[0][0].upper()+fio[0][1:].lower()} {fio[1][0].upper()}.{fio[2][0].upper()}."
     elif len(fio) == 2:
-        fio = str(f"{fio[0].upper()} {fio[1][0]}.upper().")
+        fio = f"{fio[0][0].upper()+fio[0][1:].lower()} {fio[1][0].upper()}."
     else:
         raise ValueError("Введите корректное ФИО")
 
