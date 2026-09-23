@@ -18,7 +18,7 @@ def format_record(rec: tuple[str, str, float]) -> str:
     if len(rec[1]) == 0:
         raise ValueError("Введите корректую группу")
 
-    if type(rec[2]) == float:
+    if type(rec[2]) == float and 0 <= rec[2] <=5 :
         ans = str(f"{fio}, гр. {group}, GPA {round(gpa,2):.2f}")
     else:
         raise TypeError("Введите корректное GPA")
