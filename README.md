@@ -12,7 +12,6 @@
 - `' +'` — один и более пробелов подряд, схлопываем в один
 - `strip()` убирает пробелы по краям
 
-![task1](images/lab03/img01.png)
 
 ```python
 def normalize(text: str, *, casefold: bool = True, yo2e: bool = True) -> str:
@@ -30,3 +29,7 @@ def normalize(text: str, *, casefold: bool = True, yo2e: bool = True) -> str:
     text = " ".join(text.split())
         
     return text.strip()
+```
+
+
+![task1](images/lab03/img01.png)
