@@ -44,7 +44,7 @@ def normalize(text: str, *, casefold: bool = True, yo2e: bool = True) -> str:
 
 ## tokenize
 
-Токенизация. Множество слов — это все подстроки, удовлетворяющие шаблону
+Токенизация. Множество слов — это все подстроки, удовлетворяющие шаблону:
 \w+(?:-\w+)*
 (буквы/цифры/подчёркивание; допускается дефис внутри слова), разделённые любыми не-\w символами.
 
@@ -88,3 +88,21 @@ def count_freq(tokens: list[str]) -> dict[str, int]:
 ```
 
 ![taskA](images/lab03/img03.png)
+
+
+## top_n
+
+Топ-N. Отсортировать пары (слово, частота) по ключу (-частота, слово) и взять первые N.
+
+```python
+def top_n(freq: dict[str, int], n: int = 5) -> list[tuple[str, int]]:
+
+    '''
+    Топ-N. Отсортировать пары (слово, частота) по ключу (-частота, слово) и взять первые N.
+    '''
+
+    ans_freq = sorted(freq.items(), key=lambda x: (-x[1],x[0]))
+    return ans_freq[:n]
+```
+
+![taskA](images/lab03/img04.png)

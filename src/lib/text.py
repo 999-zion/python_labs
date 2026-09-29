@@ -74,6 +74,11 @@ print(count_freq(["bb","aa","bb","aa","cc"]))
 '''
 
 def top_n(freq: dict[str, int], n: int = 5) -> list[tuple[str, int]]:
+
+    '''
+    Топ-N. Отсортировать пары (слово, частота) по ключу (-частота, слово) и взять первые N.
+    '''
+
     ans_freq = sorted(freq.items(), key=lambda x: (-x[1],x[0]))
     return ans_freq[:n]
 
