@@ -13,3 +13,20 @@
 - `strip()` убирает пробелы по краям
 
 ![task1](images/lab03/img01.png)
+
+```python
+def normalize(text: str, *, casefold: bool = True, yo2e: bool = True) -> str:
+    text = text.replace("\t"," ")
+    text = text.replace("\n"," ")
+    text = text.replace("\r"," ")
+
+    if yo2e:
+        text = text.replace("ё","е")
+        text = text.replace("Ё","Е")
+
+    if casefold:
+        text = text.casefold()
+
+    text = " ".join(text.split())
+        
+    return text.strip()
