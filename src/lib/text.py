@@ -1,6 +1,15 @@
 import re
 
 def normalize(text: str, *, casefold: bool = True, yo2e: bool = True) -> str:
+    
+    '''
+    Нормализация. Преобразование строки s в norm(s):
+    1) Нормализует
+    2) заменяет все ё/Ё на е/Е
+    3) заменяет управляющие символы \\t, \\r, \\n на пробел
+    4) «схлопывает» последовательности пробелов в один
+    '''
+
     text = text.replace("\t"," ")
     text = text.replace("\n"," ")
     text = text.replace("\r"," ")
@@ -15,6 +24,7 @@ def normalize(text: str, *, casefold: bool = True, yo2e: bool = True) -> str:
     text = " ".join(text.split())
         
     return text.strip()
+
 
 '''
 print(normalize("ПрИвЕт\nМИр\t"))
