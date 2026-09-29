@@ -1,7 +1,7 @@
 import re
 
 def normalize(text: str, *, casefold: bool = True, yo2e: bool = True) -> str:
-    
+
     '''
     Нормализация. Преобразование строки s в norm(s):
     1) Нормализует
@@ -34,7 +34,13 @@ print(normalize("  двойные   пробелы  "))
 '''
 
 def tokenize(text: str) -> list[str]:
-    tokens = re.findall('\w+(?:-\w+)*',text)
+
+    '''
+    Токенизация. Множество слов — это все подстроки, удовлетворяющие шаблону \\w+(?:-\\w+)*
+    (буквы/цифры/подчёркивание; допускается дефис внутри слова), разделённые любыми не-\\w символами.
+    '''
+
+    tokens = re.findall(r"\w+(?:-\w+)*",text)
     return tokens
 
 '''
