@@ -52,6 +52,12 @@ print(tokenize("emoji 😀 не слово"))
 '''
 
 def count_freq(tokens: list[str]) -> dict[str, int]:
+
+    '''
+    Частоты. Для списка токенов T = [t₁, …, tₙ] частота слова w равна
+    f(w) = |{ i : tᵢ = w }|.
+    '''
+
     freq = {}
 
     for i in tokens:
@@ -82,7 +88,7 @@ print(top_n(count_freq(["bb","aa","bb","aa","cc"]) , n = 2))
 assert normalize("ПрИвЕт\nМИр\t") == "привет мир"
 assert normalize("ёжик, Ёлка") == "ежик, елка"
 
-tokenize
+# tokenize
 assert tokenize("привет, мир!") == ["привет", "мир"]
 assert tokenize("по-настоящему круто") == ["по-настоящему", "круто"]
 assert tokenize("2025 год") == ["2025", "год"]

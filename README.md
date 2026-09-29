@@ -61,3 +61,30 @@ def tokenize(text: str) -> list[str]:
 ```
 
 ![taskA](images/lab03/img02.png)
+
+
+## count_freq
+
+Частоты. Для списка токенов T = [t₁, …, tₙ] частота слова w равна:
+f(w) = |{ i : tᵢ = w }|.
+
+```python
+def count_freq(tokens: list[str]) -> dict[str, int]:
+
+    '''
+    Частоты. Для списка токенов T = [t₁, …, tₙ] частота слова w равна
+    f(w) = |{ i : tᵢ = w }|.
+    '''
+
+    freq = {}
+
+    for i in tokens:
+        if i in freq:
+            freq[i] += 1
+        else:
+            freq[i] = 1
+            
+    return freq
+```
+
+![taskA](images/lab03/img03.png)
