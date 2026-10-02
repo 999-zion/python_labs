@@ -106,3 +106,55 @@ def top_n(freq: dict[str, int], n: int = 5) -> list[tuple[str, int]]:
 ```
 
 ![taskA](images/lab03/img04.png)
+
+
+## Задание B — src/text_stats.py (скрипт со stdin)
+
+Скрипт читает текст из stdin (до EOF), нормализует и токенизирует его с помощью функций из модуля text.py, считает общее количество слов, количество уникальных слов и выводит топ-5 самых частых слов. Добавлена возможность вывода красивой таблички(переменная tablet).
+
+```python
+from src.lib.text import normalize, tokenize, count_freq, top_n
+
+tablet = 1
+stroka = input("Введите строку: ")
+
+clean = normalize(stroka)
+tokens = tokenize(clean)
+unique = len(set(tokens))
+freq_dict = count_freq(tokens)
+top_5 = top_n(freq_dict)
+
+if tablet:
+    max_len = max([len(i[0]) for i in top_5])
+    if max_len > 5:
+        print("слово"+(max_len-4)*" "+"|"+" частота")
+        print("-"*(10+max_len))
+        for i in top_5:
+            print(f"{i[0]:<{max_len}} | {i[1]}")
+        print("-"*(10+max_len))
+    else: 
+        print("слово | частота")
+        print("-"*15)
+        for i in top_5:
+            print(f"{i[0]:<{5}} | {i[1]}")
+        print("-"*15)
+else:
+    print(f"Всего слов: {len(tokens)}")
+    print(f"Уникальных слов: {unique}")
+    print("Топ-5:")
+    for i in top_5:
+        print(f"{i[0]}:{i[1]}")
+```
+
+
+![taskB](images/lab03/img05.png)
+![taskB](images/lab03/img06.png)
+
+## Как запустить 
+
+Вручную, с клавиатуры
+В терминале из корня репозитория ввести
+
+```python
+python -m src.lab03.text_stats
+```
