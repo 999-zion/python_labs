@@ -258,8 +258,6 @@ python -m src.lab04.text_report_2 data/lab04/a.txt data/lab04/b.txt
 
 ## Задание A — JSON ↔ CSV
 
-Модуль [json_csv.py](./json_csv.py) содержит две функции.
-
 ### Функция `json_to_csv`
 
 ```python
@@ -399,6 +397,8 @@ csv_to_json(
 ![Результат CSV → JSON](images/lab05/json_out1.png)
 ![Результат CSV → JSON](images/lab05/json_out2.png)
 
+
+### Запуск модуля JSON ↔ CSV
 Из корня репозитория:
 
 ```
@@ -416,7 +416,6 @@ python -m src.lab05.json_csv
 
 ## Задание B — CSV → XLSX
 
-Модуль [csv_xlsx.py](./csv_xlsx.py) содержит функцию:
 
 ```python
 import csv
@@ -488,16 +487,15 @@ csv_to_xlsx(
 )
 ```
 
-![Результат CSV → XLSX](lab05/xlsx_out1.png)
-![Результат CSV → XLSX](lab05/xlsx_out2.png)
+![Результат CSV → XLSX](images/lab05/xlsx_out1.png)
+![Результат CSV → XLSX](images/lab05/xlsx_out2.png)
 
 ### Запуск модуля CSV → XLSX
 
 ```powershell
 python -m src.lab05.csv_xlsx
 ```
-После запуска создаётся файл `data/lab05/out/people.xlsx`.
-После запуска создаётся файл `data/lab05/out/cities.xlsx`.
+После запуска создаётся файл `data/lab05/out/people.xlsx` , `data/lab05/out/cities.xlsx`.
 
 ## Обработка ошибок
 
