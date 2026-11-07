@@ -160,6 +160,8 @@ if __name__ == "__main__":
     main()
 ```
 
+---
+
 ```powershell
 python -m src.lab06.cli_convert json2csv --in data/lab05/samples/people.json --out data/lab05/out/people.csv
 python -m src.lab06.cli_convert csv2json --in data/lab05/samples/people.csv --out data/lab05/out/people.json
