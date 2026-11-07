@@ -1,513 +1,200 @@
-# ЛР4 - Файлы: TXT/CSV и отчёты по текстовой статистике
-## Задание A
+# ЛР6 - CLI-утилиты с argparse (cat/grep-lite + конвертеры)
 
-### `read_text`
+## Задание A - Текстовые утилиты (cli_text.py)
+Модуль создаёт консольную утилиту с двумя подкомандами. `cat --input <путь> [-n]` выводит содержимое файла построчно, а с флагом `-n` добавляет перед каждой строкой её номер. `stats --input <путь> [--top N]` считает частоты слов в файле с помощью функций из ЛР3 (`normalize`, `tokenize`, `count_freq`, `top_n` из `src/lib/text.py`) и печатает общее число слов, число уникальных слов и топ-N самых частых слов (по умолчанию 5). Файл читается функцией `read_text` из ЛР4. Расположен в `src/lab06/cli_text.py`.
+
 ```python
-from pathlib import Path
-def read_text(path: str | Path, encoding: str = "utf-8") -> str:
-
-    """
-    Читает текстовый файл целиком и возвращает его содержимое
-    как одну строку.
-
-    По умолчанию файл читается в кодировке UTF-8. Если нужен другой
-    формат кодировки, можно передать его явно, например:
-        read_text("data/input.txt", encoding="cp1251")
-
-    Если файл не найден - функция не перехватывает ошибку,
-    а даёт ей "всплыть" наружу как FileNotFoundError.
-    Если кодировка не подходит к содержимому файла - аналогично
-    всплывает UnicodeDecodeError.
-
-    Если файл пустой - возвращается пустая строка "".
-    """
-
-    p = Path(path)
-    # FileNotFoundError и UnicodeDecodeError пусть «всплывают» — это нормально
-    return p.read_text(encoding=encoding)
-```
-1. Принимает путь к файлу и преобразует его в объект класса `Path` для работы.
-2. Вызывает встроенный метод `.read_text()`, который открывает файл, декодирует его в указанной кодировке и полностью считывает в оперативную память в виде единой строки.
-3. Ошибки отсутствия файла (`FileNotFoundError`) или несовпадения кодировки (`UnicodeDecodeError`) намеренно не перехватываются, позволяя им «всплывать» в вызывающий скрипт.
----
-
-### `write_csv`
-```python
-import csv
-from pathlib import Path
-from typing import Iterable, Sequence
-
-def ensure_parent_dir(path: str | Path) -> None:
-
-    """Создать родительские директории для path, если их ещё нет."""
-
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-
-
-def write_csv(rows: Iterable[Sequence], path: str | Path,
-              header: tuple[str, ...] | None = None) -> None:
-    
-    """
-    Записать строки в CSV (разделитель ','). Перезаписывает файл.
-    Если передан header — он записывается первой строкой.
-    Все строки должны иметь одинаковую длину, иначе ValueError.
-    """
-
-    ensure_parent_dir(path)
-    p = Path(path)
-    rows = list(rows)
-
-    length = {len(i) for i in rows}
-    if header is not None:
-        length.add(len(header))
-    if len(length) > 1:
-        raise ValueError("Все строки должны иметь одинаковую длину")
-
-    with p.open("w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        if header is not None:
-            w.writerow(header)
-        for r in rows:
-            w.writerow(r)
-```
-
-1. `ensure_parent_dir` извлекает путь к содержащей папке целевого файла с помощью свойства `.parent`. Создает эту директорию методом `.mkdir()`. Флаг `parents=True` отвечает за рекурсивное создание вложенных папок, а `exist_ok=True` игнорирует ошибку, если папка уже существует.
-2. `write_csv` принудительно конвертирует итерируемый объект строк в список `list(rows)` для фиксации данных в памяти.
-3. Проверяет «прямоугольность» структуры: через генераторное множество собирает длины всех строк данных, а также длину заголовка `header` (если он передан). Если в множестве `lengths` оказывается больше одного значения, возбуждается исключение `ValueError`.
-4. Вызывает функцию `ensure_parent_dir()` для гарантированного создания всех промежуточных папок перед сохранением.
-5. Открывает файл через `p.open()` в режиме записи с параметром `newline=""`, предотвращающим появление пустых строк на Windows.
-6. Инициализирует объект `csv.writer()`, записывает заголовок (при наличии), после чего в цикле `for` последовательно вносит в файл каждую строку данных.
-
-![Результат выполнения Задания A](images/lab04/img_a_01.png)
-![Результат выполнения Задания A](images/lab04/img_a_02.png)
-
----
-## Задание B
-```python
+import argparse
 import sys
+from src.lab04.io_txt_csv import read_text
 from src.lib.text import normalize, tokenize, count_freq, top_n
-from src.lab04.io_txt_csv import read_text, write_csv
 
-def main():
+def read_input(path: str) -> str:
+    """
+    Читает текстовый файл (в кодировке UTF-8) и возвращает его содержимое.
+
+    Если файл не найден или не читается как UTF-8 - печатает понятное
+    сообщение об ошибке (в stderr) и завершает программу с кодом 1.
+    """
     try:
-        raw_text = read_text("data/lab04/input.txt", encoding="utf-8")
+        return read_text(path)
     except FileNotFoundError:
-        print("Ошибка: файл не найден")
-        return
+        print(f"Ошибка: файл не найден: {path}", file=sys.stderr)
+        sys.exit(1)
+    except UnicodeDecodeError:
+        print(f"Ошибка: не удалось прочитать файл {path} в кодировке UTF-8", file=sys.stderr)
+        sys.exit(1)
 
-    clean = normalize(raw_text)
-    tokens = tokenize(clean)
-    unique = len(set(tokens))
-    freq_dict = count_freq(tokens)
+def run_cat(args: argparse.Namespace) -> None:
+    """
+    Подкоманда cat: выводит содержимое файла построчно.
+    Если указан флаг -n - перед каждой строкой печатается её номер.
+    """
+    text = read_input(args.input)
 
-    all_rows = sorted(freq_dict.items(), key=lambda x: (-x[1], x[0]))
-    top_5 = top_n(freq_dict)
+    lines = text.splitlines()
 
-    write_csv(all_rows, "data/lab04/report.csv", header = ("word", "count"))
+    for number, line in enumerate(lines, start=1):
+        if args.n:
+            print(f"{number}: {line}")
+        else:
+            print(line)
+
+def run_stats(args: argparse.Namespace) -> None:
+    """
+    Подкоманда stats: считает частоты слов в файле (функции из ЛР3)
+    и печатает общее число слов, число уникальных слов и топ слов.
+    """
+    text = read_input(args.input)
+
+    tokens = tokenize(normalize(text))
+    freq = count_freq(tokens)
 
     print(f"Всего слов: {len(tokens)}")
-    print(f"Уникальных слов: {unique}")
-    print("Топ-5:")
-    for i in top_5:
-        print(f"{i[0]}: {i[1]}")
+    print(f"Уникальных слов: {len(freq)}")
+    print(f"Топ-{args.top}:")
+    for word, count in top_n(freq, n=args.top):
+        print(f"{word}: {count}")
+    
+def main() -> None:
+    parser = argparse.ArgumentParser(description="CLI-утилиты для работы с текстовыми файлами")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    cat_parser = subparsers.add_parser("cat", help="вывести содержимое файла", description="Выводит содержимое файла построчно.")
+    cat_parser.add_argument("--input", required=True, help="путь к текстовому файлу")
+    cat_parser.add_argument("-n", action="store_true", help="нумеровать строки")
+
+    stats_parser = subparsers.add_parser("stats", help="частоты слов в тексте", description="Считает частоты слов в тексте и выводит самые частые.")
+    stats_parser.add_argument("--input", required=True, help="путь к текстовому файлу")
+    stats_parser.add_argument("--top", type=int, default=5, help="сколько слов показать (по умолчанию 5)")
+
+    args = parser.parse_args()
+
+    if args.command == "cat":
+        run_cat(args)
+    elif args.command == "stats":
+        if args.top <= 0:
+            parser.error("--top должен быть положительным числом")
+        run_stats(args)
 
 if __name__ == "__main__":
     main()
 ```
 
-1. Скрипт пытается прочесть входной файл `input.txt` через функцию `read_text()`. Процесс обернут в блок `try-except`: при отсутствии файла выводится сообщение `Ошибка: файл не найден` и выполнение функции завершается через `return`.
-2. Успешно прочитанная строка передается в функцию `normalize()` для приведения к единому регистру, замены `ё` на `е` и очистки от лишних спецсимволов. Результат сразу передается в `tokenize()` для разбиения текста на список слов-токенов.
-3. Функция `count_freq()` собирает токены в частотный словарь. Общее количество слов вычисляется как длина списка токенов (`len(tokens)`), а число уникальных — как размер словаря (`len(set(tokens))`).
-4. Метод `freq_dict.items()` превращает словарь в список пар `(слово, частота)`. Функция `sorted()` упорядочивает их по ключу `lambda x: (-x[1], x[0])`.
-5. Функция `top_n()` извлекает 5 самых частотных элементов для последующего вывода.
-6. Отсортированный массив `all_rows` передается в функцию `write_csv()`, которая записывает его на диск по пути `report.csv` вместе с заголовком столбцов `("word", "count")`.
-7. В терминал через f-строки выводятся итоговые числовые метрики и список топ-слов в цикле `for`.
+## Проверка
 
+### cat
 
-![Результат выполнения Задания B](images/lab04/img_b_1.png)
-![Результат выполнения Задания B](images/lab04/img_b_2.png)
+people.csv
+```
+name,age,city
+Alice,22,SPB
+Bob,25,Moscow
+Carlos,30,Kazan
+Dana,21,SPB
+Andrey,27,Novosibirsk
+```
+
+![Задание](images/lab06/img01.png)
+
+### stats
+
+stats.txt
+```
+Привет, мир! Привет, Python!
+Python - простой язык, а мир программирования большой.
+Мы изучаем Python, чтобы писать простые программы.
+По-настоящему интересно, когда программа работает.
+Ёлка и ёжик живут в лесу, а ежик любит ёлку.
+```
+
+![Задание](images/lab06/img02.png)
 
 ---
-
-## Задание со звёздочкой
+## Задание B - Конвертеры (cli_convert.py)
+Модуль создаёт консольную утилиту с тремя подкомандами: `json2csv`, `csv2json` и `csv2xlsx`. У каждой два обязательных параметра: `--in` (входной файл) и `--out` (выходной файл). Подкоманды вызывают функции из ЛР5 (`json_to_csv`, `csv_to_json`, `csv_to_xlsx`). Расположен в `src/lab06/cli_convert.py`.
 
 ```python
+import argparse
+import json
 import sys
-from pathlib import Path
-from src.lib.text import normalize, tokenize, count_freq, top_n
-from src.lab04.io_txt_csv import read_text, write_csv
-            
-def main():
-    files = sys.argv[1:]
-    if not files:
-        print("Ошибка: не указаны входные файлы")
-        return
+from src.lab05.json_csv import json_to_csv, csv_to_json
+from src.lab05.csv_xlsx import csv_to_xlsx
 
-    per_file_rows = []
-    total_freq = {}
-    total_tokens = 0
-    total_unique_words = set()
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Конвертеры данных JSON / CSV / XLSX")
+    sub = parser.add_subparsers(dest="command", required=True)
 
-    for path in files:
-        try:
-            raw_text = read_text(path, encoding="utf-8")
-        except FileNotFoundError:
-            print(f"Ошибка: файл не найден: {path}")
-            return
+    p1 = sub.add_parser("json2csv",help="преобразовать JSON в CSV",description="Преобразует JSON в CSV.")
+    p1.add_argument("--in", dest="input", required=True, help="входной .json файл")
+    p1.add_argument("--out", dest="output", required=True, help="выходной .csv файл")
 
-        tokens = tokenize(normalize(raw_text))
-        freq = count_freq(tokens)
+    p2 = sub.add_parser("csv2json",help="преобразовать CSV в JSON",description="Преобразует CSV в JSON.")
+    p2.add_argument("--in", dest="input", required=True, help="входной .csv файл")
+    p2.add_argument("--out", dest="output", required=True, help="выходной .json файл")
 
-        file_name = Path(path).name
+    p3 = sub.add_parser("csv2xlsx",help="преобразовать CSV в XLSX",description="Преобразует CSV в файл Excel.")
+    p3.add_argument("--in", dest="input", required=True, help="входной .csv файл")
+    p3.add_argument("--out", dest="output", required=True, help="выходной .xlsx файл")
 
-        for word, cnt in freq.items():
-            per_file_rows.append((file_name, word, cnt))
-            total_freq[word] = total_freq.get(word, 0) + cnt
+    args = parser.parse_args()
 
-        total_tokens += len(tokens)
-        total_unique_words.update(freq.keys())
-
-        top_5 = top_n(freq)
-        max_len = max([len(i[0]) for i in top_5])
-        print(file_name)
-        if max_len > 5:
-            print("слово"+(max_len-4)*" "+"|"+" частота")
-            print("-"*(10+max_len))
-            for i in top_5:
-                print(f"{i[0]:<{max_len}} | {i[1]}")
-                print("-"*(10+max_len))
-        else: 
-            print("слово | частота")
-            print("-"*15)
-            for i in top_5:
-                print(f"{i[0]:<{5}} | {i[1]}")
-            print("-"*15)
-
-    per_file_rows.sort(key=lambda r: (r[0], -r[2], r[1]))
-    write_csv(per_file_rows, "data/lab04/report_per_file.csv", header=("file", "word", "count"))
-
-    
-    total_rows = sorted(total_freq.items(), key=lambda r: (-r[1], r[0]))
-    write_csv(total_rows, "data/lab04/report_total.csv", header=("word", "count"))
-    print()
-    print("Информация по всем файлам:")
-    print(f"Всего слов: {total_tokens}")
-    print(f"Уникальных слов: {len(total_unique_words)}")
-    print("Топ-5:")
-
-    top_5 = top_n(total_freq)
-    max_len = max([len(i[0]) for i in top_5])
-
-    if max_len > 5:
-        print("слово"+(max_len-4)*" "+"|"+" частота")
-        print("-"*(10+max_len))
-        for i in top_5:
-            print(f"{i[0]:<{max_len}} | {i[1]}")
-            print("-"*(10+max_len))
-    else: 
-        print("слово | частота")
-        print("-"*15)
-        for i in top_5:
-            print(f"{i[0]:<{5}} | {i[1]}")
-            print("-"*15)
+    try:
+        if args.command == "json2csv":
+            json_to_csv(args.input, args.output)
+        elif args.command == "csv2json":
+            csv_to_json(args.input, args.output)
+        elif args.command == "csv2xlsx":
+            csv_to_xlsx(args.input, args.output)
+    except FileNotFoundError:
+        print(f"Ошибка: файл не найден: {args.input}", file=sys.stderr)
+        sys.exit(1)
+    except json.JSONDecodeError:
+        print(f"Ошибка: некорректный JSON",file=sys.stderr)
+        sys.exit(1)
+    except ValueError as error:
+        print(f"Ошибка: {error}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
 ```
-![Результат выполнения Задания со звёздочкой](images/lab04/img_b_star1.png)
-![Результат выполнения Задания со звёздочкоё](images/lab04/img_b_star2.png)
-![Результат выполнения Задания со звёздочкоё](images/lab04/img_b_star3.png)
----
-
-## Политика обработки краевых ситуаций и ошибок
-
-*   **Отсутствие входного файла (`FileNotFoundError`):** Если указанный файл по заданному пути не существует, программа прерывает выполнение, выводит в консоль понятное сообщение об ошибке вида `[Ошибка]: Файл не найден` и завершает работу с кодом.
-*   **Сбой декодирования (`UnicodeDecodeError`):** Если кодировка файла не соответствует заданной (например, попытка прочесть файл `cp1251` как `utf-8`), программа безопасно завершается с уведомлением пользователя о необходимости явного указания параметра `--encoding`.
-*   **Обработка пустого файла:** При передаче абсолютно пустого файла программа не падает. В консоли выводится статистика о нулевом количестве слов, а в результирующем CSV-файле сохраняется **строка заголовка (`word,count`)** без контента.
-*   **Большие файлы:** Настоящее ТЗ подразумевает полное считывание файла в оперативную память как одной строки. При обработке терабайтных логов в реальных условиях рекомендуется модифицировать логику чтения на построчный или блочный стриминг.
-*   **Валидация CSV-строк:** В модуле `io_txt_csv.py` встроена проверка структуры данных. Если переданный двумерный массив содержит строки разной длины, вызывается исключение `ValueError`.
-
----
-
-## Способ запуска `text_report_1.py`
-
-Запуск выполняется из корня репозитория (там, где лежит папка `src/`), с помощью флага `-m`:
-
-```python
-python -m src.lab04.text_report_1
-```
-
-## Способ запуска `text_report_2.py`
-
-Запуск выполняется из корня репозитория (там, где лежит папка `src/`), с помощью флага `-m`:
-
-```python
-python -m src.lab04.text_report_2 data/lab04/a.txt data/lab04/b.txt
-```
-
-
-# ЛР5 - JSON и конвертации (JSON↔CSV, CSV→XLSX)
-
-## Структура лабораторной работы
-
-- `src/lab05/json_csv.py` — преобразование JSON в CSV и CSV в JSON;
-- `src/lab05/csv_xlsx.py` — преобразование CSV в XLSX.
-
-Входные примеры находятся в каталоге `data/lab05/samples/`, а результаты
-конвертаций — в каталоге `data/lab05/out/`.
-
-## Задание A — JSON ↔ CSV
-
-### Функция `json_to_csv`
-
-```python
-from pathlib import Path
-import json
-import csv
-from src.lab04.io_txt_csv import ensure_parent_dir
-
-def json_to_csv(json_path: str, csv_path: str) -> None:
-    """
-    Преобразует JSON-файл в CSV.
-    Поддерживает список словарей [{...}, {...}], заполняет отсутствующие поля пустыми строками.
-    Кодировка UTF-8. Порядок колонок — как в первом объекте.
-    """
-    json_file = Path(json_path)
-    csv_file = Path(csv_path)
-
-    if not json_file.exists():
-        raise FileNotFoundError("Файл не найден")
-    
-    if json_file.suffix.lower() != ".json":
-        raise ValueError(f"Неверный формат входного файла: ожидается .json")
-    
-    if csv_file.suffix.lower() != ".csv":
-        raise ValueError(f"Неверный формат выходного файла: ожидается .csv")
-
-    with json_file.open('r', encoding='utf-8') as p:
-        try:
-            data = json.load(p)
-        except json.JSONDecodeError:
-            raise ValueError("Пустой JSON или неподдерживаемая структура")
-
-    if not isinstance(data, list) or len(data) == 0:
-        raise ValueError('Файл JSON пустой или имеет неправильный формат')
-    if not all(isinstance(item, dict) for item in data):
-        raise ValueError("Все элементы списка JSON должны быть словарями")
-
-    ensure_parent_dir(csv_file)
-
-    fieldnames = {}
-    for element in data:
-        for key in element.keys():
-            fieldnames[key] = None
-
-    with csv_file.open('w', newline="", encoding='utf-8') as f:
-        w = csv.DictWriter(f, fieldnames=list(fieldnames.keys()))
-        w.writeheader()
-        w.writerows(data)
-```
-
-Функция:
-
-1. Проверяет существование входного файла;
-2. Проверяет расширение `.json` и `.csv`;
-3. Читает JSON в кодировке UTF-8;
-4. Проверяет, что корневой объект является непустым списком словарей;
-5. Собирает названия всех ключей в порядке их первого появления;
-6. Записывает заголовок и строки в CSV в кодировке UTF-8.
-
-Если в одном из словарей отсутствует ключ, `csv.DictWriter` записывает в
-соответствующую ячейку пустое значение.
-
-Пример вызова:
-
-```python
-json_to_csv(
-    "data/lab05/samples/people.json",
-    "data/lab05/out/people_from_json.csv",
-)
-```
-
-![Результат JSON → CSV](images/lab05/csv_out1.png)
-![Результат JSON → CSV](images/lab05/csv_out2.png)
-
----
-
-### Функция `csv_to_json`
-```python
-from pathlib import Path
-import json
-import csv
-from src.lab04.io_txt_csv import ensure_parent_dir
-
-def csv_to_json(csv_path: str, json_path: str) -> None:
-    """
-    Преобразует CSV в JSON (список словарей).
-    Заголовок обязателен, значения сохраняются как строки.
-    json.dump(..., ensure_ascii=False, indent=2)
-    """
-    json_file = Path(json_path)
-    csv_file = Path(csv_path)
-
-    if not csv_file.exists():
-        raise FileNotFoundError("Файл не найден")
-    
-    if json_file.suffix.lower() != ".json":
-        raise ValueError(f"Неверный формат входного файла: ожидается .json")
-    
-    if csv_file.suffix.lower() != ".csv":
-        raise ValueError(f"Неверный формат выходного файла: ожидается .csv")
-
-    
-    with csv_file.open("r", newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        if reader.fieldnames is None:
-            raise ValueError("CSV не содержит заголовок")
-        
-        data = list(reader)
-
-    if not data:
-        raise ValueError("Файл CSV не содержит данных")
-
-    ensure_parent_dir(json_file)
-
-    with json_file.open("w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-```
-
-Функция:
-
-1. Проверяет существование входного файла;
-2. Проверяет расширение `.csv` и `.json`;
-3. Читает CSV в кодировке UTF-8;
-4. Проверяет наличие заголовка и хотя бы одной строки данных;
-5. Преобразует каждую строку в словарь;
-6. Сохраняет список словарей в JSON с отступом в два пробела.
-
-Пример вызова:
-
-```python
-csv_to_json(
-    "data/lab05/samples/people.csv",
-    "data/lab05/out/people_from_csv.json",
-)
-```
-
-![Результат CSV → JSON](images/lab05/json_out1.png)
-![Результат CSV → JSON](images/lab05/json_out2.png)
-
-
-### Запуск модуля JSON ↔ CSV
-Из корня репозитория:
-
-```
-powershell
-python -m src.lab05.json_csv
-```
-
-При таком запуске создаются:
-
-- `data/lab05/out/people_from_csv.json`;
-- `data/lab05/out/people_from_json.csv`;
-- `data/lab05/out/cities.json`;
-- `data/lab05/out/cities.csv`.
-
-
-## Задание B — CSV → XLSX
-
-
-```python
-import csv
-from pathlib import Path
-from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
-from src.lab04.io_txt_csv import ensure_parent_dir
-
-def csv_to_xlsx(csv_path: str, xlsx_path: str) -> None:
-    """
-    Конвертирует CSV в XLSX.
-    Использует openpyxl.
-    Первая строка CSV — заголовок.
-    Лист называется "Sheet1".
-    Колонки — автоширина по длине текста (не менее 8 символов).
-    """
-    src = Path(csv_path)
-    dst = Path(xlsx_path)
-
-    if not src.exists():
-        raise FileNotFoundError("Указанный CSV файл не найден")
-    if src.suffix.lower() != ".csv":
-        raise ValueError(f"Неверный тип файла: ожидается .csv, получено '{src.suffix}'")
-    if dst.suffix.lower() != ".xlsx":
-        raise ValueError(f"Неверный тип файла: ожидается .xlsx, получено '{dst.suffix}'")
-
-    with src.open('r', newline='', encoding='utf-8') as f:
-        reader = list(csv.reader(f))
-
-    if not reader:
-        raise ValueError("Файл CSV пустой")
-
-    widths = {}
-    for row in reader:
-        for index, cell in enumerate(row):
-            if len(cell) > widths.get(index, 0):
-                widths[index] = len(cell)
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Sheet1"
-    for row in reader:
-        ws.append(row)
-
-    for index, width in widths.items():
-        letter = get_column_letter(index + 1)
-        ws.column_dimensions[letter].width = max(8, width)
-
-    ensure_parent_dir(dst)
-    wb.save(dst)
-```
-
-Функция:
-
-1. Проверяет существование CSV-файла;
-2. Проверяет расширение `.csv` и `.xlsx`;
-3. Читает строки в кодировке UTF-8;
-4. Создаёт книгу Excel с помощью `openpyxl`;
-5. Добавляет строки CSV на лист `Sheet1`;
-6. Рассчитывает ширину столбцов;
-7. Сохраняет результат по указанному пути.
-
-Пример вызова:
-
-```python
-csv_to_xlsx(
-    "data/lab05/samples/people.csv",
-    "data/lab05/out/people.xlsx",
-)
-```
-
-![Результат CSV → XLSX](images/lab05/xlsx_out1.png)
-![Результат CSV → XLSX](images/lab05/xlsx_out2.png)
-
-### Запуск модуля CSV → XLSX
 
 ```powershell
-python -m src.lab05.csv_xlsx
+python -m src.lab06.cli_convert json2csv --in data/lab05/samples/people.json --out data/lab05/out/people.csv
+python -m src.lab06.cli_convert csv2json --in data/lab05/samples/people.csv --out data/lab05/out/people.json
+python -m src.lab06.cli_convert csv2xlsx --in data/lab05/samples/people.csv --out data/lab05/out/people.xlsx
 ```
-После запуска создаётся файл `data/lab05/out/people.xlsx` , `data/lab05/out/cities.xlsx`.
 
-## Обработка ошибок
+![Задание](images/lab06/img03)
+![Задание](images/lab06/img04)
+![Задание](images/lab06/img05)
 
-Входные функции явно сообщают об ошибках:
+---
+## Способ запуска
 
-- `FileNotFoundError` — входной файл не найден;
-- `ValueError` — расширение файла не соответствует ожидаемому формату;
-- `ValueError` — JSON пустой, имеет неподдерживаемую структуру или содержит
-  элементы не-словари;
-- `ValueError` — CSV пустой или не содержит строк данных.
+Запуск выполняется из **корня репозитория** (там, где лежит папка `src/`), с помощью флага `-m`:
 
-Родительский каталог выходного файла создаётся функцией
-`ensure_parent_dir()` из `src.lab04.io_txt_csv`, поэтому выходные каталоги должны
-создаваться автоматически.
+```powershell
+python -m src.lab06.cli_text <подкоманда> [параметры]
+python -m src.lab06.cli_convert <подкоманда> [параметры]
+```
 
+### Справка --help
+
+Справка работает и для самой утилиты, и для каждой подкоманды, например:
+
+```
+python -m src.lab06.cli_text --help
+usage: python.exe -m src.lab06.cli_text.py [-h] {cat,stats} ...
+
+CLI-утилиты для работы с текстовыми файлами
+
+positional arguments:
+  {cat,stats}
+    cat        вывести содержимое файла
+    stats      частоты слов в тексте
+
+options:
+  -h, --help   show this help message and exit
+```
