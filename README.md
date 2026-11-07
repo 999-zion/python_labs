@@ -166,9 +166,9 @@ python -m src.lab06.cli_convert csv2json --in data/lab05/samples/people.csv --ou
 python -m src.lab06.cli_convert csv2xlsx --in data/lab05/samples/people.csv --out data/lab05/out/people.xlsx
 ```
 
-![Задание](images/lab06/img03)
-![Задание](images/lab06/img04)
-![Задание](images/lab06/img05)
+![Задание](images/lab06/img03.png)
+![Задание](images/lab06/img04.png)
+![Задание](images/lab06/img05.png)
 
 ---
 ## Способ запуска
